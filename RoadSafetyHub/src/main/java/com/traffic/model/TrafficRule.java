@@ -1,15 +1,15 @@
 package com.traffic.model;
 
-public class TrafficRules {
+public class TrafficRule {
 	private int ruleId;
 	private String ruleName;
 	private double fineAmount;
 	private int penaltyPoints;
 
-	public TrafficRules() {
+	public TrafficRule() {
 	}
 
-	public TrafficRules(int ruleId, String ruleName, double fineAmount, int penaltyPoints) {
+	public TrafficRule(int ruleId, String ruleName, double fineAmount, int penaltyPoints) {
 		this.ruleId = ruleId;
 		this.ruleName = ruleName;
 		this.fineAmount = fineAmount;

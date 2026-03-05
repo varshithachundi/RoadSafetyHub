@@ -8,7 +8,7 @@ import com.traffic.model.Owner;
 
 public class OwnerServiceImpl implements OwnerService {
 
-    private OwnerInterface ownerDAO;
+    public OwnerInterface ownerDAO;
 
     public OwnerServiceImpl() {
         ownerDAO = new OwnerImpl();

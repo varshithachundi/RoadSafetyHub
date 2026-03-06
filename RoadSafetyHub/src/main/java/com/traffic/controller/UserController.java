@@ -14,7 +14,8 @@ import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/UserController")
 public class UserController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+
+    private static final long serialVersionUID = 1L;
 
     private UserImpl userDao = new UserImpl();
 
@@ -23,7 +24,13 @@ public class UserController extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        if (action.equals("register")) {
+        if (action == null) {
+            response.sendRedirect("index.jsp");
+            return;
+        }
+
+        // REGISTER USER
+        if (action.equalsIgnoreCase("register")) {
 
             String username = request.getParameter("username");
             String password = request.getParameter("password");
@@ -37,13 +44,14 @@ public class UserController extends HttpServlet {
             boolean status = userDao.registerUser(user);
 
             if (status) {
-                response.sendRedirect("login.jsp");
+                response.sendRedirect("index.jsp?success=registered");
             } else {
-                response.sendRedirect("register.jsp?error=Registration Failed");
+                response.sendRedirect("index.jsp?error=registrationFailed");
             }
         }
 
-        else if (action.equals("login")) {
+        // LOGIN USER
+        else if (action.equalsIgnoreCase("login")) {
 
             String username = request.getParameter("username");
             String password = request.getParameter("password");
@@ -57,20 +65,17 @@ public class UserController extends HttpServlet {
 
                 String role = user.getRole();
 
-                if (role.equalsIgnoreCase("ADMIN")) {
-                    response.sendRedirect("adminDashboard.jsp");
+                if (role.equalsIgnoreCase("admin")) {
+                    response.sendRedirect("admin/dashboard.jsp");
                 }
-
-                else if (role.equalsIgnoreCase("POLICE")) {
-                    response.sendRedirect("policeDashboard.jsp");
+                else if (role.equalsIgnoreCase("police")) {
+                    response.sendRedirect("police/dashboard.jsp");
                 }
-
-                else if (role.equalsIgnoreCase("OWNER")) {
-                    response.sendRedirect("ownerDashboard.jsp");
+                else if (role.equalsIgnoreCase("owner")) {
+                    response.sendRedirect("owner/dashboard.jsp");
                 }
-
             } else {
-                response.sendRedirect("login.jsp?error=Invalid Credentials");
+                response.sendRedirect("index.jsp?error=invalidLogin");
             }
         }
     }

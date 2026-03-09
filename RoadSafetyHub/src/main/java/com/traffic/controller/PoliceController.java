@@ -1,4 +1,5 @@
 package com.traffic.controller;
+
 import java.io.IOException;
 import com.traffic.model.PoliceOfficer;
 import com.traffic.service.PoliceService;
@@ -11,51 +12,39 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/PoliceController")
 public class PoliceController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
-	PoliceService policeService = new PoliceServiceImpl();
+    private static final long serialVersionUID = 1L;
+    PoliceService policeService = new PoliceServiceImpl();
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		String action = request.getParameter("action");
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String action = request.getParameter("action");
+        String base = request.getContextPath();
 
-		if (action.equals("add")) {
-			String name = request.getParameter("name");
-			String badgeNumber = request.getParameter("badgeNumber");
-			int userId = Integer.parseInt(request.getParameter("userId"));
-			PoliceOfficer officer = new PoliceOfficer();
-			officer.setName(name);
-			officer.setBadgeNumber(badgeNumber);
-			officer.setUserId(userId);
-			boolean result = policeService.addPoliceOfficer(officer);
-			if (result) {
-				response.sendRedirect("admin/police.jsp?msg=Officer Added Successfully");
-			} else {
-				response.sendRedirect("admin/police.jsp?error=Failed to add officer");
-			}
-		}
-		else if (action.equals("update")) {
-			int officerId = Integer.parseInt(request.getParameter("officerId"));
-			String name = request.getParameter("name");
-			String badgeNumber = request.getParameter("badgeNumber");
-			PoliceOfficer officer = new PoliceOfficer();
-			officer.setOfficerId(officerId);
-			officer.setName(name);
-			officer.setBadgeNumber(badgeNumber);
-			boolean result = policeService.updatePoliceOfficer(officer);
-			if (result) {
-				response.sendRedirect("admin/police.jsp?msg=Officer Updated Successfully");
-			} else {
-				response.sendRedirect("admin/police.jsp?error=Update Failed");
-			}
-		}
-		else if (action.equals("delete")) {
-			int officerId = Integer.parseInt(request.getParameter("officerId"));
-			boolean result = policeService.deletePoliceOfficer(officerId);
-			if (result) {
-				response.sendRedirect("admin/police.jsp?msg=Officer Deleted Successfully");
-			} else {
-				response.sendRedirect("admin/police.jsp?error=Delete Failed");
-			}
-		}
-	}
+        if (action.equals("add")) {
+            PoliceOfficer officer = new PoliceOfficer();
+            officer.setName(request.getParameter("name"));
+            officer.setBadgeNumber(request.getParameter("badgeNumber"));
+            officer.setUserId(Integer.parseInt(request.getParameter("userId")));
+            boolean result = policeService.addPoliceOfficer(officer);
+            response.sendRedirect(base + (result ? "/admin/police.jsp?msg=Officer Added Successfully" : "/admin/police.jsp?error=Failed to add officer"));
+        }
+        else if (action.equals("update")) {
+            PoliceOfficer officer = new PoliceOfficer();
+            officer.setOfficerId(Integer.parseInt(request.getParameter("officerId")));
+            officer.setName(request.getParameter("name"));
+            officer.setBadgeNumber(request.getParameter("badgeNumber"));
+            boolean result = policeService.updatePoliceOfficer(officer);
+            response.sendRedirect(base + (result ? "/admin/police.jsp?msg=Officer Updated Successfully" : "/admin/police.jsp?error=Update Failed"));
+        }
+        else if (action.equals("delete")) {
+            int officerId = Integer.parseInt(request.getParameter("officerId"));
+            boolean result = policeService.deletePoliceOfficer(officerId);
+            response.sendRedirect(base + (result ? "/admin/police.jsp?msg=Officer Deleted Successfully" : "/admin/police.jsp?error=Delete Failed"));
+        }
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.sendRedirect(request.getContextPath() + "/admin/police.jsp");
+    }
 }

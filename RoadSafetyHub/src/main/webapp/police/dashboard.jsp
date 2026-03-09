@@ -1,273 +1,278 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="com.traffic.model.User" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false"%>
+<%@ page import="com.traffic.model.*" %>
 <%@ page import="com.traffic.service.*" %>
 <%@ page import="java.util.*" %>
 <%
     User user = (User) session.getAttribute("user");
-    if (user == null || !user.getRole().equalsIgnoreCase("admin")) {
+    if (user == null || !user.getRole().equalsIgnoreCase("police")) {
         response.sendRedirect(request.getContextPath() + "/index.jsp");
         return;
     }
-    OwnerService ownerService = new OwnerServiceImpl();
-    PoliceService policeService = new PoliceServiceImpl();
-    VehicleService vehicleService = new VehicleServiceImpl();
     ViolationService violationService = new ViolationServiceImpl();
-    int totalOwners = ownerService.getAllOwners().size();
-    int totalPolice = policeService.getAllPoliceOfficers().size();
+    VehicleService vehicleService = new VehicleServiceImpl();
+    List<Violation> allViolations = violationService.getAllViolations();
     int totalVehicles = vehicleService.getAllVehicles().size();
-    int totalViolations = violationService.getAllViolations().size();
-    long unpaidCount = violationService.getAllViolations().stream()
-        .filter(v -> "UNPAID".equalsIgnoreCase(v.getPaymentStatus())).count();
-    long paidCount = totalViolations - unpaidCount;
+    long unpaid = 0, paid = 0;
+    for (Violation v : allViolations) {
+        if ("UNPAID".equalsIgnoreCase(v.getPaymentStatus())) unpaid++;
+        else paid++;
+    }
 %>
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Admin Dashboard – RoadSafetyHub</title>
+<title>Police Dashboard – RoadSafetyHub</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-    :root {
-        --gold: #ffc107;
-        --gold-dark: #e0a800;
-        --dark: #0f0f0f;
-        --card-bg: #1a1a1a;
-        --border: rgba(255,193,7,0.2);
+    :root { --gold: #ffc107; --blue: #2196f3; --dark: #0a0f1a; --card-bg: #111827; --border: rgba(33,150,243,0.25); }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--dark); color: #e0e0e0; font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    /* NAVBAR */
+    .top-nav {
+        background: rgba(10,15,26,0.98);
+        border-bottom: 2px solid var(--blue);
+        padding: 14px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
     }
-    * { box-sizing: border-box; }
-    body {
-        background: var(--dark);
-        color: #e0e0e0;
-        font-family: 'DM Sans', sans-serif;
-        padding-top: 70px;
-        min-height: 100vh;
-    }
-    .page-header {
-        background: linear-gradient(135deg, #1a1a1a 0%, #222 100%);
-        border-bottom: 2px solid var(--gold);
-        padding: 28px 0 20px;
-        margin-bottom: 32px;
-    }
-    .page-header h2 {
+    .nav-brand {
         font-family: 'Bebas Neue', sans-serif;
-        font-size: 36px;
+        font-size: 24px;
         letter-spacing: 3px;
         color: var(--gold);
-        margin: 0;
+        text-decoration: none;
     }
-    .stat-card {
-        background: var(--card-bg);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 28px 24px;
-        transition: transform 0.2s, border-color 0.2s;
+    .nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .nav-link-btn {
+        color: #ccc;
+        text-decoration: none;
+        padding: 7px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+    .nav-link-btn:hover { color: var(--blue); border-color: var(--blue); background: rgba(33,150,243,0.08); }
+    .nav-link-btn.active { color: var(--blue); border-color: var(--blue); background: rgba(33,150,243,0.12); }
+    .nav-user { background: rgba(33,150,243,0.15); border: 1px solid var(--blue); border-radius: 20px; padding: 5px 14px; font-size: 13px; color: var(--blue); }
+    .nav-logout { background: transparent; border: 1px solid #555; color: #aaa; padding: 7px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; transition: all 0.2s; }
+    .nav-logout:hover { border-color: #f44336; color: #f44336; }
+
+    /* LAYOUT */
+    .main-wrapper { padding-top: 70px; }
+
+    /* HERO BANNER */
+    .hero-banner {
+        background: linear-gradient(135deg, #0a0f1a 0%, #0d1b2e 50%, #0a1628 100%);
+        border-bottom: 1px solid var(--border);
+        padding: 40px 32px 32px;
         position: relative;
         overflow: hidden;
     }
-    .stat-card::before {
-        content: '';
+    .hero-banner::before {
+        content: '👮';
         position: absolute;
-        top: 0; left: 0;
-        width: 4px; height: 100%;
-        background: var(--gold);
-        border-radius: 12px 0 0 12px;
+        right: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 100px;
+        opacity: 0.07;
     }
-    .stat-card:hover {
-        transform: translateY(-4px);
-        border-color: var(--gold);
-    }
-    .stat-icon {
-        font-size: 38px;
-        margin-bottom: 10px;
-    }
-    .stat-number {
+    .hero-banner h1 {
         font-family: 'Bebas Neue', sans-serif;
-        font-size: 48px;
+        font-size: 42px;
+        letter-spacing: 4px;
+        color: var(--blue);
+        margin-bottom: 6px;
+    }
+    .hero-banner p { color: #888; font-size: 15px; }
+    .hero-banner strong { color: var(--blue); }
+
+    /* CONTENT */
+    .content { padding: 32px; }
+
+    /* STAT CARDS */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 28px 24px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-4px); border-color: var(--blue); }
+    .stat-card .accent { position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--blue); border-radius: 14px 0 0 14px; }
+    .stat-card .emoji { font-size: 30px; margin-bottom: 12px; }
+    .stat-card .number { font-family: 'Bebas Neue', sans-serif; font-size: 52px; line-height: 1; margin-bottom: 4px; }
+    .stat-card .label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; }
+    .stat-card.blue .number { color: var(--blue); }
+    .stat-card.gold .number { color: var(--gold); }
+    .stat-card.red .number { color: #f44336; }
+    .stat-card.green .number { color: #4caf50; }
+
+    /* SECTION TITLE */
+    .section-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 20px;
+        letter-spacing: 2px;
         color: var(--gold);
-        line-height: 1;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255,193,7,0.2);
     }
-    .stat-label {
-        font-size: 13px;
-        color: #888;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        margin-top: 4px;
-    }
+
+    /* ACTION CARDS */
+    .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 40px; }
     .action-card {
         background: var(--card-bg);
         border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 24px;
+        border-radius: 14px;
+        padding: 32px 24px;
+        text-align: center;
         text-decoration: none;
         color: #e0e0e0;
-        display: block;
         transition: all 0.2s;
-        text-align: center;
+        display: block;
     }
-    .action-card:hover {
-        background: #222;
-        border-color: var(--gold);
-        color: var(--gold);
-        transform: translateY(-3px);
-        text-decoration: none;
-    }
-    .action-card .icon { font-size: 32px; margin-bottom: 10px; }
-    .action-card .title { font-weight: 600; font-size: 15px; }
-    .section-title {
-        font-family: 'Bebas Neue', sans-serif;
-        font-size: 22px;
-        letter-spacing: 2px;
-        color: var(--gold);
-        margin-bottom: 20px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border);
-    }
-    .badge-paid { background: #1a3a2a; color: #4caf50; border: 1px solid #4caf50; }
-    .badge-unpaid { background: #3a1a1a; color: #f44336; border: 1px solid #f44336; }
-    .progress-bar-custom {
-        background: #2a2a2a;
-        border-radius: 20px;
-        height: 10px;
-        overflow: hidden;
-        margin-top: 8px;
-    }
-    .progress-fill {
-        height: 100%;
-        border-radius: 20px;
-        background: linear-gradient(90deg, var(--gold), var(--gold-dark));
-        transition: width 1s ease;
-    }
-    footer {
-        background: #111;
-        color: #555;
-        text-align: center;
-        padding: 16px;
-        font-size: 13px;
-        border-top: 1px solid #222;
-        margin-top: 60px;
-    }
-    .alert-msg {
-        background: #1a3a1a;
-        border: 1px solid #4caf50;
-        color: #4caf50;
-        border-radius: 8px;
-        padding: 12px 20px;
-    }
+    .action-card:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-4px); background: #131d2e; text-decoration: none; }
+    .action-card .a-icon { font-size: 40px; margin-bottom: 14px; }
+    .action-card .a-title { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+    .action-card .a-desc { font-size: 12px; color: #666; }
+
+    /* TABLE */
+    .table-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 40px; }
+    .table-card-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .table-card-header span { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--gold); }
+    .custom-table { width: 100%; border-collapse: collapse; }
+    .custom-table thead th { background: #0d1520; color: var(--blue); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; font-size: 13px; padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    .custom-table tbody td { padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #bbb; font-size: 14px; }
+    .custom-table tbody tr:hover { background: rgba(33,150,243,0.05); }
+    .custom-table tbody tr:last-child td { border-bottom: none; }
+    .badge-paid { background: #0d2218; color: #4caf50; border: 1px solid #4caf50; font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+    .badge-unpaid { background: #2a0d0d; color: #f44336; border: 1px solid #f44336; font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+    .vid { color: var(--gold); font-weight: 700; }
+
+    footer { background: #080c14; color: #444; text-align: center; padding: 18px; font-size: 12px; border-top: 1px solid #1a2030; }
 </style>
 </head>
 <body>
-<%@ include file="../navbar.jsp" %>
 
-<div class="page-header">
-    <div class="container-fluid px-4">
-        <h2>⚙️ Admin Dashboard</h2>
-        <p class="text-muted mb-0" style="font-size:14px;">Welcome back, <strong class="text-warning"><%= user.getUsername() %></strong> — Full system control</p>
+<!-- NAVBAR -->
+<nav class="top-nav">
+    <a href="#" class="nav-brand">🚦 RoadSafetyHub</a>
+    <div class="nav-links">
+        <a href="dashboard.jsp" class="nav-link-btn active">🏠 Dashboard</a>
+        <a href="addViolation.jsp" class="nav-link-btn">➕ Add Violation</a>
+        <a href="violationList.jsp" class="nav-link-btn">📋 Violations</a>
+        <span class="nav-user">👮 <%= user.getUsername() %> [POLICE]</span>
+        <a href="../index.jsp" class="nav-logout">Logout</a>
     </div>
-</div>
+</nav>
 
-<div class="container-fluid px-4">
-    <% String msg = request.getParameter("msg"); if (msg != null) { %>
-    <div class="alert-msg mb-4">✅ <%= msg %></div>
-    <% } %>
+<div class="main-wrapper">
 
-    <!-- Stats Row -->
-    <p class="section-title">📊 System Overview</p>
-    <div class="row g-3 mb-5">
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">👤</div>
-                <div class="stat-number"><%= totalOwners %></div>
-                <div class="stat-label">Vehicle Owners</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">👮</div>
-                <div class="stat-number"><%= totalPolice %></div>
-                <div class="stat-label">Police Officers</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">🚗</div>
-                <div class="stat-number"><%= totalVehicles %></div>
-                <div class="stat-label">Registered Vehicles</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">⚠️</div>
-                <div class="stat-number"><%= totalViolations %></div>
-                <div class="stat-label">Total Violations</div>
-            </div>
-        </div>
+    <!-- HERO -->
+    <div class="hero-banner">
+        <h1>👮 Police Dashboard</h1>
+        <p>Welcome back, <strong><%= user.getUsername() %></strong> — Traffic Enforcement Officer</p>
     </div>
 
-    <!-- Violation Status -->
-    <div class="row g-3 mb-5">
-        <div class="col-md-6">
-            <div class="stat-card">
-                <p class="section-title mb-3">📈 Violation Payment Status</p>
-                <div class="d-flex justify-content-between mb-2">
-                    <span><span class="badge badge-paid px-2 py-1 me-2">PAID</span> <%= paidCount %> violations</span>
-                    <span><span class="badge badge-unpaid px-2 py-1 me-2">UNPAID</span> <%= unpaidCount %> violations</span>
-                </div>
-                <% int paidPct = totalViolations > 0 ? (int)((paidCount * 100) / totalViolations) : 0; %>
-                <div class="progress-bar-custom">
-                    <div class="progress-fill" style="width:<%= paidPct %>%"></div>
-                </div>
-                <small class="text-muted mt-2 d-block"><%= paidPct %>% fines collected</small>
+    <div class="content">
+
+        <!-- STATS -->
+        <div class="section-title">📊 Today's Overview</div>
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <div class="accent"></div>
+                <div class="emoji">⚠️</div>
+                <div class="number"><%= allViolations.size() %></div>
+                <div class="label">Total Violations</div>
+            </div>
+            <div class="stat-card red">
+                <div class="accent" style="background:#f44336;"></div>
+                <div class="emoji">❌</div>
+                <div class="number"><%= unpaid %></div>
+                <div class="label">Unpaid Fines</div>
+            </div>
+            <div class="stat-card green">
+                <div class="accent" style="background:#4caf50;"></div>
+                <div class="emoji">✅</div>
+                <div class="number"><%= paid %></div>
+                <div class="label">Paid Fines</div>
+            </div>
+            <div class="stat-card gold">
+                <div class="accent" style="background:var(--gold);"></div>
+                <div class="emoji">🚗</div>
+                <div class="number"><%= totalVehicles %></div>
+                <div class="label">Registered Vehicles</div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="stat-card">
-                <p class="section-title mb-3">🗂️ Quick Summary</p>
-                <table class="table table-dark table-sm mb-0" style="background:transparent;">
+
+        <!-- QUICK ACTIONS -->
+        <div class="section-title">⚡ Quick Actions</div>
+        <div class="actions-grid">
+            <a href="addViolation.jsp" class="action-card">
+                <div class="a-icon">➕</div>
+                <div class="a-title">Add Violation</div>
+                <div class="a-desc">Record a new traffic violation</div>
+            </a>
+            <a href="violationList.jsp" class="action-card">
+                <div class="a-icon">📋</div>
+                <div class="a-title">View All Violations</div>
+                <div class="a-desc">Browse all recorded violations</div>
+            </a>
+            <a href="../index.jsp" class="action-card" style="border-color:rgba(244,67,54,0.3);">
+                <div class="a-icon">🚪</div>
+                <div class="a-title">Logout</div>
+                <div class="a-desc">Sign out safely</div>
+            </a>
+        </div>
+
+        <!-- RECENT VIOLATIONS TABLE -->
+        <div class="section-title">🕐 Recent Violations</div>
+        <div class="table-card">
+            <div class="table-card-header">
+                <span>Latest Records</span>
+                <a href="violationList.jsp" style="color:var(--blue);font-size:13px;text-decoration:none;">View All →</a>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="custom-table">
+                    <thead>
+                        <tr><th>ID</th><th>Vehicle</th><th>Rule</th><th>Officer</th><th>Date</th><th>Status</th></tr>
+                    </thead>
                     <tbody>
-                        <tr><td class="text-muted">Total Owners</td><td class="text-warning fw-bold"><%= totalOwners %></td></tr>
-                        <tr><td class="text-muted">Total Police</td><td class="text-warning fw-bold"><%= totalPolice %></td></tr>
-                        <tr><td class="text-muted">Total Vehicles</td><td class="text-warning fw-bold"><%= totalVehicles %></td></tr>
-                        <tr><td class="text-muted">Pending Fines</td><td class="text-danger fw-bold"><%= unpaidCount %></td></tr>
+                        <% if (allViolations.isEmpty()) { %>
+                        <tr><td colspan="6" style="text-align:center;padding:30px;color:#555;">No violations recorded yet.</td></tr>
+                        <% } else { int count = 0; for (Violation v : allViolations) { if (count++ >= 6) break; %>
+                        <tr>
+                            <td><span class="vid">#<%= v.getViolationId() %></span></td>
+                            <td>🚗 <%= v.getVehicleId() %></td>
+                            <td>📋 Rule-<%= v.getRuleId() %></td>
+                            <td>👮 <%= v.getOfficerId() %></td>
+                            <td style="font-size:12px;"><%= v.getViolationDate() != null ? v.getViolationDate().toString().substring(0,16) : "N/A" %></td>
+                            <td><% if ("PAID".equalsIgnoreCase(v.getPaymentStatus())) { %><span class="badge-paid">✅ PAID</span><% } else { %><span class="badge-unpaid">❌ UNPAID</span><% } %></td>
+                        </tr>
+                        <% } } %>
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
 
-    <!-- Quick Actions -->
-    <p class="section-title">⚡ Quick Actions</p>
-    <div class="row g-3 mb-5">
-        <div class="col-6 col-md-3">
-            <a href="${pageContext.request.contextPath}/admin/owners.jsp" class="action-card">
-                <div class="icon">👤</div>
-                <div class="title">Manage Owners</div>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a href="${pageContext.request.contextPath}/admin/police.jsp" class="action-card">
-                <div class="icon">👮</div>
-                <div class="title">Manage Police</div>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a href="${pageContext.request.contextPath}/admin/violations.jsp" class="action-card">
-                <div class="icon">⚠️</div>
-                <div class="title">View Violations</div>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a href="${pageContext.request.contextPath}/index.jsp" class="action-card">
-                <div class="icon">🚪</div>
-                <div class="title">Logout</div>
-            </a>
-        </div>
     </div>
 </div>
 
-<footer>© 2026 RoadSafetyHub | Developed by Varshitha</footer>
-
+<footer>© 2026 RoadSafetyHub | Developed by Varshitha | Police Portal</footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 package com.traffic.controller;
+
 import java.io.IOException;
 import com.traffic.model.Owner;
 import com.traffic.service.OwnerService;
@@ -11,56 +12,41 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/OwnerController")
 public class OwnerController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
-	
-	OwnerService ownerService = new OwnerServiceImpl();
+    private static final long serialVersionUID = 1L;
+    OwnerService ownerService = new OwnerServiceImpl();
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-			throws ServletException, IOException {
-		String action = request.getParameter("action");
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String action = request.getParameter("action");
+        String base = request.getContextPath();
 
-		if (action.equals("add")) {
-			String name = request.getParameter("name");
-			String mobile = request.getParameter("mobile");
-			String address = request.getParameter("address");
-			int userId = Integer.parseInt(request.getParameter("userId"));
-			Owner owner = new Owner();
-			owner.setName(name);
-			owner.setMobile(mobile);
-			owner.setAddress(address);
-			owner.setUserId(userId);
-			boolean result = ownerService.addOwner(owner);
-			if (result) {
-				response.sendRedirect("admin/owners.jsp?msg=Owner Added Successfully");
-			} else {
-				response.sendRedirect("admin/owners.jsp?error=Failed to add owner");
-			}
-		}
-		else if (action.equals("update")) {
-			int ownerId = Integer.parseInt(request.getParameter("ownerId"));
-			String name = request.getParameter("name");
-			String mobile = request.getParameter("mobile");
-			String address = request.getParameter("address");
-			Owner owner = new Owner();
-			owner.setOwnerId(ownerId);
-			owner.setName(name);
-			owner.setMobile(mobile);
-			owner.setAddress(address);
-			boolean result = ownerService.updateOwner(owner);
-			if (result) {
-				response.sendRedirect("admin/owners.jsp?msg=Owner Updated Successfully");
-			} else {
-				response.sendRedirect("admin/owners.jsp?error=Update Failed");
-			}
-		}
-		else if (action.equals("delete")) {
-			int ownerId = Integer.parseInt(request.getParameter("ownerId"));
-			boolean result = ownerService.deleteOwner(ownerId);
-			if (result) {
-				response.sendRedirect("admin/owners.jsp?msg=Owner Deleted Successfully");
-			} else {
-				response.sendRedirect("admin/owners.jsp?error=Delete Failed");
-			}
-		}
-	}
+        if (action.equals("add")) {
+            Owner owner = new Owner();
+            owner.setName(request.getParameter("name"));
+            owner.setMobile(request.getParameter("mobile"));
+            owner.setAddress(request.getParameter("address"));
+            owner.setUserId(Integer.parseInt(request.getParameter("userId")));
+            boolean result = ownerService.addOwner(owner);
+            response.sendRedirect(base + (result ? "/admin/owners.jsp?msg=Owner Added Successfully" : "/admin/owners.jsp?error=Failed to add owner"));
+        }
+        else if (action.equals("update")) {
+            Owner owner = new Owner();
+            owner.setOwnerId(Integer.parseInt(request.getParameter("ownerId")));
+            owner.setName(request.getParameter("name"));
+            owner.setMobile(request.getParameter("mobile"));
+            owner.setAddress(request.getParameter("address"));
+            boolean result = ownerService.updateOwner(owner);
+            response.sendRedirect(base + (result ? "/admin/owners.jsp?msg=Owner Updated Successfully" : "/admin/owners.jsp?error=Update Failed"));
+        }
+        else if (action.equals("delete")) {
+            int ownerId = Integer.parseInt(request.getParameter("ownerId"));
+            boolean result = ownerService.deleteOwner(ownerId);
+            response.sendRedirect(base + (result ? "/admin/owners.jsp?msg=Owner Deleted Successfully" : "/admin/owners.jsp?error=Delete Failed"));
+        }
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.sendRedirect(request.getContextPath() + "/admin/owners.jsp");
+    }
 }

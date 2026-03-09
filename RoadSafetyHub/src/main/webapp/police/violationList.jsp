@@ -1,15 +1,13 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="com.traffic.model.*" %>
-<%@ page import="com.traffic.service.*" %>
-<%@ page import="java.util.*" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false"%>
+<%@ page import="com.traffic.model.*,com.traffic.service.*,java.util.*" %>
 <%
     User user = (User) session.getAttribute("user");
     if (user == null || !user.getRole().equalsIgnoreCase("police")) {
-        response.sendRedirect(request.getContextPath() + "/index.jsp");
-        return;
+        response.sendRedirect(request.getContextPath() + "/index.jsp"); return;
     }
-    ViolationService violationService = new ViolationServiceImpl();
-    List<Violation> violations = violationService.getAllViolations();
+    List<Violation> violations = new ViolationServiceImpl().getAllViolations();
+    long paid = violations.stream().filter(v -> "PAID".equalsIgnoreCase(v.getPaymentStatus())).count();
+    long unpaid = violations.size() - paid;
     String msg = request.getParameter("msg");
     String error = request.getParameter("error");
 %>
@@ -22,88 +20,96 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-    :root { --gold: #ffc107; --dark: #0f0f0f; --card-bg: #1a1a1a; --border: rgba(255,193,7,0.2); --blue: #2196f3; }
-    body { background: var(--dark); color: #e0e0e0; font-family: 'DM Sans', sans-serif; padding-top: 70px; min-height: 100vh; }
-    .page-header { background: #0d1b2a; border-bottom: 2px solid var(--blue); padding: 24px 0 18px; margin-bottom: 28px; }
-    .page-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 3px; color: var(--blue); margin: 0; }
-    .card-dark { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; }
-    .table-dark-custom thead th { background: #222; color: var(--gold); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1.5px; font-size: 14px; border-color: var(--border); }
-    .table-dark-custom tbody tr { border-color: #2a2a2a; color: #ccc; transition: background 0.15s; }
-    .table-dark-custom tbody tr:hover { background: #222; }
-    .table-dark-custom td { border-color: #2a2a2a; vertical-align: middle; }
-    .badge-paid { background: #1a3a2a; color: #4caf50; border: 1px solid #4caf50; font-size: 11px; padding: 3px 8px; border-radius: 20px; }
-    .badge-unpaid { background: #3a1a1a; color: #f44336; border: 1px solid #f44336; font-size: 11px; padding: 3px 8px; border-radius: 20px; }
-    .btn-gold { background: var(--gold); color: #000; font-weight: 600; border: none; border-radius: 6px; }
-    .btn-gold:hover { background: #e0a800; color: #000; }
-    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--gold); }
-    .filter-input { background: #2a2a2a; border: 1px solid #444; color: #e0e0e0; border-radius: 8px; padding: 8px 12px; font-size: 13px; }
-    .filter-input:focus { border-color: var(--blue); outline: none; }
-    footer { background: #111; color: #555; text-align: center; padding: 16px; font-size: 13px; border-top: 1px solid #222; margin-top: 60px; }
+    :root{--gold:#ffc107;--blue:#2196f3;--dark:#0a0f1a;--card:#111827;--border:rgba(33,150,243,0.25);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--dark);color:#e0e0e0;font-family:'DM Sans',sans-serif;min-height:100vh;}
+    .top-nav{background:rgba(10,15,26,0.98);border-bottom:2px solid var(--blue);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:fixed;top:0;left:0;right:0;z-index:1000;}
+    .nav-brand{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--gold);text-decoration:none;}
+    .nav-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .nav-link-btn{color:#ccc;text-decoration:none;padding:7px 16px;border-radius:6px;font-size:14px;border:1px solid transparent;transition:all 0.2s;}
+    .nav-link-btn:hover,.nav-link-btn.active{color:var(--blue);border-color:var(--blue);background:rgba(33,150,243,0.08);}
+    .nav-user{background:rgba(33,150,243,0.15);border:1px solid var(--blue);border-radius:20px;padding:5px 14px;font-size:13px;color:var(--blue);}
+    .nav-logout{background:transparent;border:1px solid #555;color:#aaa;padding:7px 16px;border-radius:6px;text-decoration:none;font-size:13px;}
+    .nav-logout:hover{border-color:#f44336;color:#f44336;}
+    .main-wrapper{padding-top:70px;}
+    .page-header{background:linear-gradient(135deg,#0a0f1a,#0d1b2e);border-bottom:1px solid var(--border);padding:32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+    .page-header h1{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:3px;color:var(--blue);}
+    .page-header p{color:#888;font-size:14px;margin-top:4px;}
+    .btn-blue{background:var(--blue);color:#fff;font-weight:700;border:none;border-radius:8px;padding:10px 24px;font-size:14px;text-decoration:none;display:inline-block;}
+    .btn-blue:hover{background:#1976d2;color:#fff;}
+    .content{padding:32px;}
+    .alert-success{background:#0d2218;border:1px solid #4caf50;color:#4caf50;border-radius:8px;padding:12px 18px;margin-bottom:20px;}
+    .alert-error{background:#2a0d0d;border:1px solid #f44336;color:#f44336;border-radius:8px;padding:12px 18px;margin-bottom:20px;}
+    .summary-bar{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;align-items:center;}
+    .badge-paid{background:#0d2218;color:#4caf50;border:1px solid #4caf50;font-size:12px;padding:5px 14px;border-radius:20px;}
+    .badge-unpaid{background:#2a0d0d;color:#f44336;border:1px solid #f44336;font-size:12px;padding:5px 14px;border-radius:20px;}
+    .badge-total{background:#1a2235;color:var(--blue);border:1px solid var(--border);font-size:12px;padding:5px 14px;border-radius:20px;}
+    .filter-input{background:#1a2235;border:1px solid #2a3a55;color:#e0e0e0;border-radius:8px;padding:8px 14px;font-size:13px;margin-left:auto;}
+    .filter-input:focus{border-color:var(--blue);outline:none;}
+    .table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+    .custom-table{width:100%;border-collapse:collapse;}
+    .custom-table thead th{background:#0d1520;color:var(--blue);font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:13px;padding:14px 16px;text-align:left;border-bottom:1px solid var(--border);}
+    .custom-table tbody td{padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.04);color:#bbb;font-size:14px;vertical-align:middle;}
+    .custom-table tbody tr:hover{background:rgba(33,150,243,0.05);}
+    .custom-table tbody tr:last-child td{border-bottom:none;}
+    .vid{color:var(--gold);font-weight:700;}
+    footer{background:#080c14;color:#444;text-align:center;padding:18px;font-size:12px;border-top:1px solid #1a2030;margin-top:40px;}
 </style>
 </head>
 <body>
-<%@ include file="../navbar.jsp" %>
-
-<div class="page-header">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-            <h2>📋 Violation List</h2>
-            <p style="color:#aaa;margin:0;font-size:13px;">All recorded traffic violations</p>
+<nav class="top-nav">
+    <a href="dashboard.jsp" class="nav-brand">🚦 RoadSafetyHub</a>
+    <div class="nav-links">
+        <a href="dashboard.jsp" class="nav-link-btn">🏠 Dashboard</a>
+        <a href="addViolation.jsp" class="nav-link-btn">➕ Add Violation</a>
+        <a href="violationList.jsp" class="nav-link-btn active">📋 Violations</a>
+        <span class="nav-user">👮 <%= user.getUsername() %> [POLICE]</span>
+        <a href="../index.jsp" class="nav-logout">Logout</a>
+    </div>
+</nav>
+<div class="main-wrapper">
+    <div class="page-header">
+        <div><h1>📋 Violation List</h1><p>All recorded traffic violations</p></div>
+        <a href="addViolation.jsp" class="btn-blue">+ Add Violation</a>
+    </div>
+    <div class="content">
+        <% if (msg != null) { %><div class="alert-success">✅ <%= msg %></div><% } %>
+        <% if (error != null) { %><div class="alert-error">❌ <%= error %></div><% } %>
+        <div class="summary-bar">
+            <span class="badge-paid">✅ Paid: <%= paid %></span>
+            <span class="badge-unpaid">❌ Unpaid: <%= unpaid %></span>
+            <span class="badge-total">📋 Total: <%= violations.size() %></span>
+            <input type="text" class="filter-input" id="searchBox" onkeyup="filterTable()" placeholder="🔍 Search...">
         </div>
-        <a href="${pageContext.request.contextPath}/police/addViolation.jsp" class="btn btn-gold px-4">+ Add Violation</a>
-    </div>
-</div>
-
-<div class="container-fluid px-4">
-    <% if (msg != null) { %><div class="alert mb-3" style="background:#1a3a1a;border:1px solid #4caf50;color:#4caf50;border-radius:8px;">✅ <%= msg %></div><% } %>
-    <% if (error != null) { %><div class="alert mb-3" style="background:#3a1a1a;border:1px solid #f44336;color:#f44336;border-radius:8px;">❌ <%= error %></div><% } %>
-
-    <div class="d-flex gap-3 mb-4 flex-wrap align-items-center">
-        <span class="badge-paid px-3 py-2" style="font-size:13px;">✅ Paid: <%= violations.stream().filter(v -> "PAID".equalsIgnoreCase(v.getPaymentStatus())).count() %></span>
-        <span class="badge-unpaid px-3 py-2" style="font-size:13px;">❌ Unpaid: <%= violations.stream().filter(v -> "UNPAID".equalsIgnoreCase(v.getPaymentStatus())).count() %></span>
-        <input type="text" class="filter-input" id="searchBox" onkeyup="filterTable()" placeholder="🔍 Search violations...">
-    </div>
-
-    <div class="card-dark p-0 overflow-hidden">
-        <div class="table-responsive">
-            <table class="table table-dark-custom mb-0" id="vTable">
-                <thead>
-                    <tr><th>#</th><th>Violation ID</th><th>Vehicle ID</th><th>Rule ID</th><th>Officer ID</th><th>Date & Time</th><th>Payment Status</th></tr>
-                </thead>
-                <tbody>
+        <div class="table-card">
+            <div style="overflow-x:auto;">
+                <table class="custom-table" id="vTable">
+                    <thead><tr><th>#</th><th>ID</th><th>Vehicle</th><th>Rule</th><th>Officer</th><th>Date & Time</th><th>Status</th></tr></thead>
+                    <tbody>
                     <% if (violations.isEmpty()) { %>
-                    <tr><td colspan="7" class="text-center text-muted py-4">No violations recorded yet.</td></tr>
-                    <% } else { int i = 1; for (Violation v : violations) { %>
+                    <tr><td colspan="7" style="text-align:center;padding:40px;color:#555;">No violations recorded yet.</td></tr>
+                    <% } else { int i=1; for(Violation v : violations) { %>
                     <tr>
-                        <td><%= i++ %></td>
-                        <td><strong style="color:var(--gold);">#<%= v.getViolationId() %></strong></td>
+                        <td style="color:#555;"><%= i++ %></td>
+                        <td><span class="vid">#<%= v.getViolationId() %></span></td>
                         <td>🚗 <%= v.getVehicleId() %></td>
                         <td>📋 Rule-<%= v.getRuleId() %></td>
                         <td>👮 <%= v.getOfficerId() %></td>
-                        <td style="font-size:12px;white-space:nowrap;"><%= v.getViolationDate() != null ? v.getViolationDate().toString().substring(0,16) : "N/A" %></td>
-                        <td>
-                            <% if ("PAID".equalsIgnoreCase(v.getPaymentStatus())) { %>
-                                <span class="badge-paid">✅ PAID</span>
-                            <% } else { %>
-                                <span class="badge-unpaid">❌ UNPAID</span>
-                            <% } %>
-                        </td>
+                        <td style="font-size:12px;white-space:nowrap;"><%= v.getViolationDate()!=null?v.getViolationDate().toString().substring(0,16):"N/A" %></td>
+                        <td><% if("PAID".equalsIgnoreCase(v.getPaymentStatus())){ %><span style="background:#0d2218;color:#4caf50;border:1px solid #4caf50;font-size:11px;padding:3px 10px;border-radius:20px;">✅ PAID</span><% }else{ %><span style="background:#2a0d0d;color:#f44336;border:1px solid #f44336;font-size:11px;padding:3px 10px;border-radius:20px;">❌ UNPAID</span><% } %></td>
                     </tr>
                     <% } } %>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
-
-<footer>© 2026 RoadSafetyHub | Developed by Varshitha</footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<footer>© 2026 RoadSafetyHub | Developed by Varshitha | Police Portal</footer>
 <script>
-function filterTable() {
-    const q = document.getElementById('searchBox').value.toLowerCase();
-    document.querySelectorAll('#vTable tbody tr').forEach(r => {
-        r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
-    });
+function filterTable(){
+    const q=document.getElementById('searchBox').value.toLowerCase();
+    document.querySelectorAll('#vTable tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});
 }
 </script>
 </body>

@@ -30,10 +30,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
     :root {
-        --gold: #ffc107;
+        --gold: rgb(255, 128, 192);
         --gold-dark: #e0a800;
-        --dark: #0f0f0f;
-        --card-bg: #1a1a1a;
+        --dark: lightblue;
+        --card-bg: #FCC6BB;
         --border: rgba(255,193,7,0.2);
     }
     * { box-sizing: border-box; }
@@ -140,7 +140,7 @@
         transition: width 1s ease;
     }
     footer {
-        background: #111;
+        background:white;
         color: #555;
         text-align: center;
         padding: 16px;
@@ -149,7 +149,7 @@
         margin-top: 60px;
     }
     .alert-msg {
-        background: #1a3a1a;
+        background: ;
         border: 1px solid #4caf50;
         color: #4caf50;
         border-radius: 8px;

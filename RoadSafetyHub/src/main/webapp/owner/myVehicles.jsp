@@ -96,7 +96,9 @@
         <% if (msg != null) { %><div class="alert-success">✅ <%= msg %></div><% } %>
         <% if (error != null) { %><div class="alert-error">❌ <%= error %></div><% } %>
         <% if (owner == null) { %>
-        <div class="warning-card">⚠️ Owner profile not linked. Ask admin to add your profile with User ID: <strong><%= user.getUserId() %></strong></div>
+        <div style="background:#1a1200;border:1px solid #ff9800;border-radius:12px;padding:20px;color:#ff9800;margin-bottom:20px;">
+            ⚠️ Profile not found. Please logout and login again.
+        </div>
         <% } else { %>
         <div class="table-card">
             <div class="table-card-header">

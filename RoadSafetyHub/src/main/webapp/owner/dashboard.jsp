@@ -185,10 +185,12 @@
             <div class="profile-badge">Owner ID: #<%= owner.getOwnerId() %></div>
         </div>
         <% } else { %>
-        <div class="warning-card">
-            <h5>⚠️ Owner Profile Not Linked</h5>
-            <p style="margin:0;font-size:14px;">Your user account (User ID: <strong><%= user.getUserId() %></strong>) is not yet linked to an owner profile.</p>
-            <p style="margin:4px 0 0;font-size:13px;color:#aaa;">Ask the Admin to add an owner entry with your User ID: <strong><%= user.getUserId() %></strong></p>
+        <div class="profile-card">
+            <div class="profile-avatar">👤</div>
+            <div class="profile-info">
+                <h5><%= user.getUsername() %></h5>
+                <p style="color:#ff9800;">⚠️ Profile loading... Please refresh or re-login.</p>
+            </div>
         </div>
         <% } %>
 

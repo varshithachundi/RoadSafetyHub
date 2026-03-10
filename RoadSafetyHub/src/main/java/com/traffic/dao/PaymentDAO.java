@@ -1,9 +1,9 @@
-package com.traffic.service;
+package com.traffic.dao;
 
 import com.traffic.model.Payment;
 import java.util.List;
 
-public interface PaymentService {
+public interface PaymentDAO {
     boolean addPayment(Payment payment);
     List<Payment> getAllPayments();
     Payment getPaymentByViolationId(int violationId);

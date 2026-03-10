@@ -19,6 +19,20 @@
             if (ids.contains(v.getVehicleId())) myViolations.add(v);
         }
     }
+
+    // Load traffic rules into a map: ruleId -> TrafficRule
+    TrafficRuleService ruleService = new TrafficRuleServiceImpl();
+    Map<Integer, TrafficRule> rulesMap = new HashMap<>();
+    for (TrafficRule r : ruleService.getAllTrafficRules()) {
+        rulesMap.put(r.getRuleId(), r);
+    }
+
+    // Load vehicles into a map: vehicleId -> vehicleNumber
+    Map<Integer, String> vehicleMap = new HashMap<>();
+    for (Vehicle v : new VehicleServiceImpl().getAllVehicles()) {
+        vehicleMap.put(v.getVehicleId(), v.getVehicleNumber());
+    }
+
     long paid = myViolations.stream().filter(v -> "PAID".equalsIgnoreCase(v.getPaymentStatus())).count();
     long unpaid = myViolations.size() - paid;
     String msg = request.getParameter("msg");
@@ -62,9 +76,12 @@
     .custom-table tbody tr:hover{background:rgba(76,175,80,0.05);}
     .custom-table tbody tr:last-child td{border-bottom:none;}
     .vid{color:var(--gold);font-weight:700;}
-    .btn-pay{background:var(--gold);color:#000;font-weight:700;border:none;border-radius:6px;padding:6px 14px;font-size:12px;text-decoration:none;display:inline-block;}
+    .fine-amount{color:#f44336;font-weight:700;font-size:15px;}
+    .fine-paid{color:#4caf50;font-weight:700;font-size:15px;}
+    .rule-name{color:#bbb;font-size:12px;display:block;margin-top:2px;}
+    .btn-pay{background:var(--gold);color:#000;font-weight:700;border:none;border-radius:6px;padding:7px 16px;font-size:13px;text-decoration:none;display:inline-block;transition:background 0.2s;}
     .btn-pay:hover{background:#e0a800;color:#000;}
-    .empty-state{text-align:center;padding:60px 20px;color:#4caf50;}
+    .empty-state{text-align:center;padding:60px 20px;}
     .empty-state .icon{font-size:56px;margin-bottom:16px;}
     footer{background:#060e06;color:#444;text-align:center;padding:18px;font-size:12px;border-top:1px solid #1a2a1a;margin-top:40px;}
 </style>
@@ -88,32 +105,64 @@
     <div class="content">
         <% if (msg != null) { %><div class="alert-success">✅ <%= msg %></div><% } %>
         <% if (error != null) { %><div class="alert-error">❌ <%= error %></div><% } %>
+
         <div class="summary-bar">
             <span style="color:#888;font-size:13px;">Summary:</span>
             <span class="badge-paid">✅ Paid: <%= paid %></span>
             <span class="badge-unpaid">❌ Pending: <%= unpaid %></span>
             <span class="badge-total">📋 Total: <%= myViolations.size() %></span>
         </div>
+
         <div class="table-card">
             <div style="overflow-x:auto;">
                 <table class="custom-table">
-                    <thead><tr><th>#</th><th>ID</th><th>Vehicle</th><th>Rule</th><th>Officer</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+                    <thead>
+                        <tr><th>#</th><th>ID</th><th>Vehicle</th><th>Violation</th><th>Date</th><th>Fine Amount</th><th>Status</th><th>Action</th></tr>
+                    </thead>
                     <tbody>
                     <% if (myViolations.isEmpty()) { %>
-                    <tr><td colspan="8"><div class="empty-state"><div class="icon">🎉</div><h5>No Violations Found!</h5><p style="color:#555;font-size:14px;">Keep driving safely!</p></div></td></tr>
-                    <% } else { int i=1; for(Violation v : myViolations) { %>
+                    <tr><td colspan="8">
+                        <div class="empty-state">
+                            <div class="icon">🎉</div>
+                            <h5 style="color:#4caf50;">No Violations Found!</h5>
+                            <p style="color:#555;font-size:14px;">Keep driving safely!</p>
+                        </div>
+                    </td></tr>
+                    <% } else { int i=1; for(Violation v : myViolations) {
+                        TrafficRule rule = rulesMap.get(v.getRuleId());
+                        String ruleName = rule != null ? rule.getRuleName() : "Rule #" + v.getRuleId();
+                        double fineAmt  = rule != null ? rule.getFineAmount() : 0;
+                        String vehNum   = vehicleMap.getOrDefault(v.getVehicleId(), "Vehicle #" + v.getVehicleId());
+                    %>
                     <tr>
                         <td style="color:#555;"><%= i++ %></td>
                         <td><span class="vid">#<%= v.getViolationId() %></span></td>
-                        <td>🚗 <%= v.getVehicleId() %></td>
-                        <td>📋 Rule-<%= v.getRuleId() %></td>
-                        <td>👮 <%= v.getOfficerId() %></td>
-                        <td style="font-size:12px;white-space:nowrap;"><%= v.getViolationDate()!=null?v.getViolationDate().toString().substring(0,16):"N/A" %></td>
-                        <td><% if("PAID".equalsIgnoreCase(v.getPaymentStatus())){ %><span class="badge-paid">✅ PAID</span><% }else{ %><span class="badge-unpaid">❌ UNPAID</span><% } %></td>
+                        <td>🚗 <strong style="color:#fff;"><%= vehNum %></strong></td>
                         <td>
-                            <% if("UNPAID".equalsIgnoreCase(v.getPaymentStatus())){ %>
-                            <a href="payment.jsp?violationId=<%= v.getViolationId() %>" class="btn-pay">💳 Pay Fine</a>
-                            <% }else{ %><span style="color:#4caf50;font-size:12px;">✔ Cleared</span><% } %>
+                            <strong style="color:#e0e0e0;"><%= ruleName %></strong>
+                            <span class="rule-name">Rule ID: <%= v.getRuleId() %></span>
+                        </td>
+                        <td style="font-size:12px;white-space:nowrap;"><%= v.getViolationDate()!=null?v.getViolationDate().toString().substring(0,16):"N/A" %></td>
+                        <td>
+                            <% if ("PAID".equalsIgnoreCase(v.getPaymentStatus())) { %>
+                            <span class="fine-paid">₹<%= String.format("%.0f", fineAmt) %></span>
+                            <% } else { %>
+                            <span class="fine-amount">₹<%= String.format("%.0f", fineAmt) %></span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if ("PAID".equalsIgnoreCase(v.getPaymentStatus())) { %>
+                            <span class="badge-paid">✅ PAID</span>
+                            <% } else { %>
+                            <span class="badge-unpaid">❌ UNPAID</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if ("UNPAID".equalsIgnoreCase(v.getPaymentStatus())) { %>
+                            <a href="payment.jsp?violationId=<%= v.getViolationId() %>&amount=<%= fineAmt %>" class="btn-pay">💳 Pay ₹<%= String.format("%.0f", fineAmt) %></a>
+                            <% } else { %>
+                            <span style="color:#4caf50;font-size:12px;">✔ Cleared</span>
+                            <% } %>
                         </td>
                     </tr>
                     <% } } %>

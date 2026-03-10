@@ -38,6 +38,16 @@ public class OwnerController extends HttpServlet {
             boolean result = ownerService.updateOwner(owner);
             response.sendRedirect(base + (result ? "/admin/owners.jsp?msg=Owner Updated Successfully" : "/admin/owners.jsp?error=Update Failed"));
         }
+        else if (action.equals("updateProfile")) {
+            // Owner updating their OWN profile from dashboard
+            Owner owner = new Owner();
+            owner.setOwnerId(Integer.parseInt(request.getParameter("ownerId")));
+            owner.setName(request.getParameter("name"));
+            owner.setMobile(request.getParameter("mobile"));
+            owner.setAddress(request.getParameter("address"));
+            boolean result = ownerService.updateOwner(owner);
+            response.sendRedirect(base + (result ? "/owner/dashboard.jsp?msg=Profile Updated Successfully" : "/owner/dashboard.jsp?error=Update Failed"));
+        }
         else if (action.equals("delete")) {
             int ownerId = Integer.parseInt(request.getParameter("ownerId"));
             boolean result = ownerService.deleteOwner(ownerId);

@@ -1,49 +1,36 @@
 package com.traffic.service;
 
-import java.util.List;
-
-import com.traffic.dao.VehicleInterface;
-import com.traffic.dao.VehicleImpl;
+import com.traffic.dao.VehicleDAO;
+import com.traffic.dao.VehicleDAOImpl;
 import com.traffic.model.Vehicle;
+import java.util.List;
 
 public class VehicleServiceImpl implements VehicleService {
 
-    private VehicleInterface vehicleDAO;
-
-    public VehicleServiceImpl() {
-        vehicleDAO = new VehicleImpl();
-    }
+    VehicleDAO dao = new VehicleDAOImpl();
 
     @Override
     public boolean addVehicle(Vehicle vehicle) {
-        if (vehicle.getVehicleNumber() == null || vehicle.getVehicleNumber().trim().isEmpty()) {
-            return false;
-        }
-        return vehicleDAO.addVehicle(vehicle);
-    }
-
-    @Override
-    public Vehicle getVehicleById(int vehicleId) {
-        return vehicleDAO.getVehicleById(vehicleId);
+        return dao.addVehicle(vehicle);
     }
 
     @Override
     public List<Vehicle> getAllVehicles() {
-        return vehicleDAO.getAllVehicles();
+        return dao.getAllVehicles();
     }
 
     @Override
     public List<Vehicle> getVehiclesByOwnerId(int ownerId) {
-        return vehicleDAO.getVehiclesByOwnerId(ownerId);
+        return dao.getVehiclesByOwnerId(ownerId);
     }
 
     @Override
     public boolean updateVehicle(Vehicle vehicle) {
-        return vehicleDAO.updateVehicle(vehicle);
+        return dao.updateVehicle(vehicle);
     }
 
     @Override
     public boolean deleteVehicle(int vehicleId) {
-        return vehicleDAO.deleteVehicle(vehicleId);
+        return dao.deleteVehicle(vehicleId);
     }
 }

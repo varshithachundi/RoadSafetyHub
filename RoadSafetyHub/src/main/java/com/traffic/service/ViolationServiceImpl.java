@@ -1,41 +1,36 @@
 package com.traffic.service;
 
-import java.util.List;
-
-import com.traffic.dao.ViolationInterface;
-import com.traffic.dao.ViolationImpl;
+import com.traffic.dao.ViolationDAO;
+import com.traffic.dao.ViolationDAOImpl;
 import com.traffic.model.Violation;
+import java.util.List;
 
 public class ViolationServiceImpl implements ViolationService {
 
-    private ViolationInterface violationDAO;
-
-    public ViolationServiceImpl() {
-        violationDAO = new ViolationImpl();
-    }
+    ViolationDAO dao = new ViolationDAOImpl();
 
     @Override
     public boolean addViolation(Violation violation) {
-        return violationDAO.addViolation(violation);
+        return dao.addViolation(violation);
     }
 
     @Override
     public List<Violation> getAllViolations() {
-        return violationDAO.getAllViolations();
+        return dao.getAllViolations();
     }
 
     @Override
     public Violation getViolationById(int violationId) {
-        return violationDAO.getViolationById(violationId);
+        return dao.getViolationById(violationId);
     }
 
     @Override
     public boolean payFine(int violationId) {
-        return violationDAO.updatePaymentStatus(violationId, "PAID");
+        return dao.payFine(violationId);
     }
 
     @Override
     public boolean deleteViolation(int violationId) {
-        return violationDAO.deleteViolation(violationId);
+        return dao.deleteViolation(violationId);
     }
 }

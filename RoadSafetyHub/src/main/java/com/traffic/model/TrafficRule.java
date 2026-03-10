@@ -1,19 +1,13 @@
 package com.traffic.model;
 
 public class TrafficRule {
+
 	private int ruleId;
 	private String ruleName;
 	private double fineAmount;
 	private int penaltyPoints;
 
 	public TrafficRule() {
-	}
-
-	public TrafficRule(int ruleId, String ruleName, double fineAmount, int penaltyPoints) {
-		this.ruleId = ruleId;
-		this.ruleName = ruleName;
-		this.fineAmount = fineAmount;
-		this.penaltyPoints = penaltyPoints;
 	}
 
 	public int getRuleId() {
@@ -47,11 +41,4 @@ public class TrafficRule {
 	public void setPenaltyPoints(int penaltyPoints) {
 		this.penaltyPoints = penaltyPoints;
 	}
-
-	@Override
-	public String toString() {
-		return "TrafficRules [ruleId=" + ruleId + ", ruleName=" + ruleName + ", fineAmount=" + fineAmount
-				+ ", penaltyPoints=" + penaltyPoints + "]";
-	}
-
 }
